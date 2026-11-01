@@ -118,7 +118,8 @@
 /* GED governor attributes are backed by the native Mali PM policy. */
 extern int ged_ski_register_gpu_governor(
 	ssize_t (*available)(char *buf, size_t size, void *data),
-	ssize_t (*current)(char *buf, size_t size, void *data), void *data);
+	ssize_t (*current_governor)(char *buf, size_t size, void *data),
+	void *data);
 extern void ged_ski_unregister_gpu_governor(void *data);
 
 static ssize_t ged_mali_available_governors(char *buf, size_t size,
