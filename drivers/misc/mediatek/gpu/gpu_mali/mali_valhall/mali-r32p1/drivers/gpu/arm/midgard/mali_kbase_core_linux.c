@@ -115,6 +115,47 @@
 #include "platform/mtk_platform_common.h"
 #include <mtk_gpufreq.h>
 
+/* GED governor attributes are backed by the native Mali PM policy. */
+extern int ged_ski_register_gpu_governor(
+	ssize_t (*available)(char *buf, size_t size, void *data),
+	ssize_t (*current)(char *buf, size_t size, void *data), void *data);
+extern void ged_ski_unregister_gpu_governor(void *data);
+
+static ssize_t ged_mali_available_governors(char *buf, size_t size,
+		void *data)
+{
+	struct kbase_device *kbdev = data;
+	const struct kbase_pm_policy * const *policy_list;
+	int count, i;
+	ssize_t len = 0;
+
+	if (!kbdev)
+		return -ENODEV;
+
+	count = kbase_pm_list_policies(kbdev, &policy_list);
+	for (i = 0; i < count && len < size; i++)
+		len += scnprintf(buf + len, size - len, "%s%s",
+				 policy_list[i]->name,
+				 i == count - 1 ? "\n" : " ");
+	return len;
+}
+
+static ssize_t ged_mali_current_governor(char *buf, size_t size,
+		void *data)
+{
+	struct kbase_device *kbdev = data;
+	const struct kbase_pm_policy *policy;
+
+	if (!kbdev)
+		return -ENODEV;
+
+	policy = kbase_pm_get_policy(kbdev);
+	if (!policy)
+		return -ENODEV;
+
+	return scnprintf(buf, size, "%s\n", policy->name);
+}
+
 #if defined(MTK_GPU_BM_2)
 #include <gpu_bm.h>
 #if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
@@ -5241,6 +5282,7 @@ static int kbase_platform_device_remove(struct platform_device *pdev)
 #if IS_ENABLED(CONFIG_PROC_FS)
 	mtk_common_procfs_exit();
 #endif
+	ged_ski_unregister_gpu_governor(kbdev);
 	kbase_device_term(kbdev);
 	dev_set_drvdata(kbdev->dev, NULL);
 	kbase_device_free(kbdev);
@@ -5303,6 +5345,9 @@ static int kbase_platform_device_probe(struct platform_device *pdev)
 		dev_set_drvdata(kbdev->dev, NULL);
 		kbase_device_free(kbdev);
 	} else {
+		if (ged_ski_register_gpu_governor(ged_mali_available_governors,
+				ged_mali_current_governor, kbdev))
+			dev_warn(kbdev->dev, "GED governor interface unavailable\n");
 #ifdef MALI_KBASE_BUILD
 #if IS_ENABLED(CONFIG_PROC_FS)
 		mtk_common_procfs_init();

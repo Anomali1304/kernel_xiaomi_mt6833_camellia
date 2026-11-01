@@ -29,7 +29,7 @@
  **************************************************/
 #define MT_GPUFREQ_DVFS_ENABLE          1
 #define MT_GPUFREQ_CUST_CONFIG          0
-#define MT_GPUFREQ_CUST_INIT_OPP        (g_opp_table_segment_1[16].gpufreq_khz)
+#define MT_GPUFREQ_CUST_INIT_OPP        (g_opp_table_segment_1[22].gpufreq_khz)
 
 /**************************************************
  * DVFS Setting
@@ -338,16 +338,22 @@ struct opp_table_info *g_opp_table;
  * PTPOD definition
  **************************************************/
 unsigned int g_ptpod_opp_idx_table_segment[] = {
-	0, 4, 8, 12,
-	16, 20, 23, 26,
-	29, 32, 34, 36,
-	38, 40, 42, 44
+	0, 1, 2, 3,
+	4, 5, 6, 10,
+	14, 22, 25, 28,
+	31, 34, 36, 50
 };
 
 /**************************************************
  * GPU OPP table definition
  **************************************************/
 struct opp_table_info g_opp_table_segment_1[] = {
+	GPUOP(1500000, 85000, 85000, POSDIV_POWER_2, 1875), /* 0 final GPU OC target */
+	GPUOP(1425000, 85000, 85000, POSDIV_POWER_2, 1875), /* 1 GPU OC stage */
+	GPUOP(1350000, 85000, 85000, POSDIV_POWER_2, 1875), /* 2 GPU OC stage */
+	GPUOP(1275000, 85000, 85000, POSDIV_POWER_2, 1875), /* 3 GPU OC stage */
+	GPUOP(1200000, 85000, 85000, POSDIV_POWER_2, 1875), /* 4 GPU OC stage */
+	GPUOP(1125000, 85000, 85000, POSDIV_POWER_2, 1875), /* 1 staged GPU OC */
 	GPUOP(1068000, 85000, 85000, POSDIV_POWER_2, 1875), /* 0 sign off */
 	GPUOP(1059000, 84375, 84375, POSDIV_POWER_2, 1875), /* 1 */
 	GPUOP(1051000, 83750, 83750, POSDIV_POWER_2, 1875), /* 2 */
@@ -396,6 +402,12 @@ struct opp_table_info g_opp_table_segment_1[] = {
 };
 
 struct opp_table_info g_opp_table_segment_2[] = {
+	GPUOP(1500000, 85000, 85000, POSDIV_POWER_2, 1875), /* 0 final GPU OC target */
+	GPUOP(1425000, 85000, 85000, POSDIV_POWER_2, 1875), /* 1 GPU OC stage */
+	GPUOP(1350000, 85000, 85000, POSDIV_POWER_2, 1875), /* 2 GPU OC stage */
+	GPUOP(1275000, 85000, 85000, POSDIV_POWER_2, 1875), /* 3 GPU OC stage */
+	GPUOP(1200000, 85000, 85000, POSDIV_POWER_2, 1875), /* 4 GPU OC stage */
+	GPUOP(1125000, 85000, 85000, POSDIV_POWER_2, 1875), /* 1 staged GPU OC */
 	GPUOP(1068000, 85000, 85000, POSDIV_POWER_2, 1875), /* 0 sign off */
 	GPUOP(1059000, 84375, 84375, POSDIV_POWER_2, 1875), /* 1 */
 	GPUOP(1051000, 83750, 83750, POSDIV_POWER_2, 1875), /* 2 */
@@ -444,6 +456,12 @@ struct opp_table_info g_opp_table_segment_2[] = {
 };
 
 struct opp_table_info g_opp_table_segment_3[] = {
+	GPUOP(1500000, 85000, 85000, POSDIV_POWER_2, 1875), /* 0 final GPU OC target */
+	GPUOP(1425000, 85000, 85000, POSDIV_POWER_2, 1875), /* 1 GPU OC stage */
+	GPUOP(1350000, 85000, 85000, POSDIV_POWER_2, 1875), /* 2 GPU OC stage */
+	GPUOP(1275000, 85000, 85000, POSDIV_POWER_2, 1875), /* 3 GPU OC stage */
+	GPUOP(1200000, 85000, 85000, POSDIV_POWER_2, 1875), /* 4 GPU OC stage */
+	GPUOP(1125000, 85000, 85000, POSDIV_POWER_2, 1875), /* 1 staged GPU OC */
 	GPUOP(1068000, 85000, 85000, POSDIV_POWER_2, 1875), /* 0 sign off */
 	GPUOP(1059000, 84375, 84375, POSDIV_POWER_2, 1875), /* 1 */
 	GPUOP(1051000, 83750, 83750, POSDIV_POWER_2, 1875), /* 2 */

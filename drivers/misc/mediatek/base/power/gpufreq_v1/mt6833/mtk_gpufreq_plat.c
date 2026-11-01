@@ -3082,20 +3082,19 @@ static void __mt_gpufreq_init_table(void)
 	unsigned int segment_id = __mt_gpufreq_get_segment_id();
 	unsigned int i = 0;
 
-	/* determine max_opp/num/segment_table... by segment  */
-	if (segment_id == MT6833_SEGMENT)    /* 5G-C */
-		g_segment_max_opp_idx = 11;
-	else if (segment_id == MT6833M_SEGMENT)    /* 5G-CM */
-		g_segment_max_opp_idx = 24;
-	else if (segment_id == MT6833T_SEGMENT)    /* 5G-C+ */
+	/* Keep the full OPP range available on MT6833 segment 1. */
+	if (segment_id == MT6833_SEGMENT)
 		g_segment_max_opp_idx = 0;
+	else if (segment_id == MT6833M_SEGMENT)
+		g_segment_max_opp_idx = 30;
 	else
 		g_segment_max_opp_idx = 0;
 
-/* Special SW setting */
 #if defined(K6833V1_64_33M)
-	gpufreq_pr_info("@%s: K6833V1_64_33M load\n", __func__);
-	g_segment_max_opp_idx = 24;
+	if (segment_id != MT6833_SEGMENT) {
+		gpufreq_pr_info("@%s: K6833V1_64_33M load\n", __func__);
+		g_segment_max_opp_idx = 30;
+	}
 #endif
 
 	g_segment_min_opp_idx = NUM_OF_OPP_IDX - 1;

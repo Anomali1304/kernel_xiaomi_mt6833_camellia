@@ -11,19 +11,81 @@
  * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
  */
 
+#include <linux/mutex.h>
+#include <linux/module.h>
 #include <mt-plat/mtk_gpu_utility.h>
 #include <mtk_gpufreq.h>
 #include "ged_ski.h"
 
 static struct kobject *gpu_kobj;
 
+/* Native Mali policy bridge for GED-SKI's legacy governor attributes. */
+typedef ssize_t (*ged_gpu_governor_show_t)(char *buf, size_t size, void *data);
+static DEFINE_MUTEX(ged_gpu_governor_lock);
+static ged_gpu_governor_show_t ged_gpu_available_governors;
+static ged_gpu_governor_show_t ged_gpu_current_governor;
+static void *ged_gpu_governor_data;
+
+int ged_ski_register_gpu_governor(ged_gpu_governor_show_t available,
+		ged_gpu_governor_show_t current, void *data)
+{
+	int ret = 0;
+
+	if (!available || !current || !data)
+		return -EINVAL;
+
+	mutex_lock(&ged_gpu_governor_lock);
+	if (ged_gpu_governor_data) {
+		ret = -EBUSY;
+	} else {
+		ged_gpu_available_governors = available;
+		ged_gpu_current_governor = current;
+		ged_gpu_governor_data = data;
+	}
+	mutex_unlock(&ged_gpu_governor_lock);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(ged_ski_register_gpu_governor);
+
+void ged_ski_unregister_gpu_governor(void *data)
+{
+	mutex_lock(&ged_gpu_governor_lock);
+	if (ged_gpu_governor_data == data) {
+		ged_gpu_governor_data = NULL;
+		ged_gpu_available_governors = NULL;
+		ged_gpu_current_governor = NULL;
+	}
+	mutex_unlock(&ged_gpu_governor_lock);
+}
+EXPORT_SYMBOL_GPL(ged_ski_unregister_gpu_governor);
+
 ssize_t gpu_available_governor_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
-	return scnprintf(buf, PAGE_SIZE, "Default\n");
-}
+	ssize_t ret;
 
+	mutex_lock(&ged_gpu_governor_lock);
+	ret = ged_gpu_available_governors ?
+		ged_gpu_available_governors(buf, PAGE_SIZE,
+					    ged_gpu_governor_data) : -ENODEV;
+	mutex_unlock(&ged_gpu_governor_lock);
+	return ret;
+}
 static KOBJ_ATTR_RO(gpu_available_governor);
+
+ssize_t gpu_governor_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret;
+
+	mutex_lock(&ged_gpu_governor_lock);
+	ret = ged_gpu_current_governor ?
+		ged_gpu_current_governor(buf, PAGE_SIZE,
+					 ged_gpu_governor_data) : -ENODEV;
+	mutex_unlock(&ged_gpu_governor_lock);
+	return ret;
+}
+static KOBJ_ATTR_RO(gpu_governor);
 
 ssize_t gpu_busy_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -75,14 +137,6 @@ ssize_t gpu_freq_table_show(struct kobject *kobj,
 }
 
 static KOBJ_ATTR_RO(gpu_freq_table);
-
-ssize_t gpu_governor_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "Default\n");
-}
-
-static KOBJ_ATTR_RO(gpu_governor);
 
 static ssize_t gpu_max_clock_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -242,6 +296,12 @@ GED_ERROR ged_ski_init(void)
 		GED_LOGE("ged: failed to create gpu_available_governor!\n");
 		goto EXIT;
 	}
+	ret = ged_sysfs_create_file(gpu_kobj, &kobj_attr_gpu_governor);
+	if (ret) {
+		ret = GED_ERROR_OOM;
+		GED_LOGE("ged: failed to create gpu_governor!\n");
+		goto EXIT;
+	}
 	ret = ged_sysfs_create_file(gpu_kobj, &kobj_attr_gpu_busy);
 	if (ret) {
 		ret = GED_ERROR_OOM;
@@ -258,12 +318,6 @@ GED_ERROR ged_ski_init(void)
 	if (ret) {
 		ret = GED_ERROR_OOM;
 		GED_LOGE("ged: failed to create gpu_freq_table!\n");
-		goto EXIT;
-	}
-	ret = ged_sysfs_create_file(gpu_kobj, &kobj_attr_gpu_governor);
-	if (ret) {
-		ret = GED_ERROR_OOM;
-		GED_LOGE("ged: failed to create gpu_governor!\n");
 		goto EXIT;
 	}
 	ret = ged_sysfs_create_file(gpu_kobj, &kobj_attr_gpu_max_clock);
@@ -301,10 +355,10 @@ EXIT:
 void ged_ski_exit(void)
 {
 	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_available_governor);
+	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_governor);
 	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_busy);
 	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_clock);
 	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_freq_table);
-	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_governor);
 	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_max_clock);
 	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_min_clock);
 	ged_sysfs_remove_file(gpu_kobj, &kobj_attr_gpu_model);
