@@ -27,11 +27,11 @@ static ged_gpu_governor_show_t ged_gpu_current_governor;
 static void *ged_gpu_governor_data;
 
 int ged_ski_register_gpu_governor(ged_gpu_governor_show_t available,
-		ged_gpu_governor_show_t current, void *data)
+		ged_gpu_governor_show_t current_governor, void *data)
 {
 	int ret = 0;
 
-	if (!available || !current || !data)
+	if (!available || !current_governor || !data)
 		return -EINVAL;
 
 	mutex_lock(&ged_gpu_governor_lock);
@@ -39,7 +39,7 @@ int ged_ski_register_gpu_governor(ged_gpu_governor_show_t available,
 		ret = -EBUSY;
 	} else {
 		ged_gpu_available_governors = available;
-		ged_gpu_current_governor = current;
+		ged_gpu_current_governor = current_governor;
 		ged_gpu_governor_data = data;
 	}
 	mutex_unlock(&ged_gpu_governor_lock);
