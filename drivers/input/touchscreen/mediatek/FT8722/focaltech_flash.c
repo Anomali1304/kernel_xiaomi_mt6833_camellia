@@ -56,17 +56,16 @@ static struct proc_dir_entry *FTS_proc_tp_info_entry;
 /*****************************************************************************
 * Global variable or extern global variabls/functions
 *****************************************************************************/
-u8 fw_file[] = {
-#include FTS_UPGRADE_FW_FILE
-};
-
-u8 fw_file2[] = {
-#include FTS_UPGRADE_FW2_FILE
-};
-
-u8 fw_file3[] = {
-#include FTS_UPGRADE_FW3_FILE
-};
+/*
+ * No bundled firmware is provided by this device tree.
+ * Keep one-byte placeholders for the module table. Auto-upgrade is disabled
+ * in focaltech_config.h, so these bytes are never used as firmware.
+ * Runtime firmware loading remains available through request_firmware() and
+ * the driver's explicit firmware upgrade interface.
+ */
+u8 fw_file[] = { 0x00 };
+u8 fw_file2[] = { 0x00 };
+u8 fw_file3[] = { 0x00 };
 
 struct upgrade_module module_list[] = {
 	{FTS_MODULE_ID, FTS_MODULE_NAME, fw_file, sizeof(fw_file)},
