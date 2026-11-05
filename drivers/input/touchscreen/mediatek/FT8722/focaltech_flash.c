@@ -60,8 +60,7 @@ static struct proc_dir_entry *FTS_proc_tp_info_entry;
  * No bundled firmware is provided by this device tree.
  * Keep one-byte placeholders for the module table. Auto-upgrade is disabled
  * in focaltech_config.h, so these bytes are never used as firmware.
- * Runtime firmware loading remains available through request_firmware() and
- * the driver's explicit firmware upgrade interface.
+ * The driver's explicit firmware upgrade interface remains available.
  */
 u8 fw_file[] = { 0x00 };
 u8 fw_file2[] = { 0x00 };
